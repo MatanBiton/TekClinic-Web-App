@@ -1,6 +1,6 @@
 import React from 'react'
 import { type Session } from 'next-auth'
-import { Avatar, Badge, Box, Divider, Group, Text, Stack, type MantineColorScheme, Paper } from '@mantine/core'
+import { Avatar, Box, Divider, Group, Text, Stack, type MantineColorScheme, Paper } from '@mantine/core'
 import { type Patient } from '@/src/api/model/patient'
 import male_avatar from '@/public/male-patient.webp'
 import female_avatar from '@/public/female-patient.webp'

@@ -125,7 +125,7 @@ export class Appointment {
       formattedParams.doctor = params.doctor_id.toString()
     }
     if (params.patient_id != null) {
-      formattedParams.patient = params.patient_id.toString()
+      formattedParams.patient_id = params.patient_id.toString()
     }
     return await getAPIResourceList(Appointment, formattedParams, session)
   }

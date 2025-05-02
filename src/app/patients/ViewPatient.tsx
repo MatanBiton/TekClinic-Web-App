@@ -21,7 +21,7 @@ function padTwoDigits (num: number): string {
 }
 
 const AppointmentDate: React.FC<{ date: Date }> = ({ date }) => {
-  return `${date.getFullYear()}-${padTwoDigits(date.getMonth()+1)}-${padTwoDigits(date.getDate())}`
+  return `${date.getFullYear()}-${padTwoDigits(date.getMonth() + 1)}-${padTwoDigits(date.getDate())}`
 }
 
 const AppointmentTime: React.FC<{ date: Date }> = ({ date }) => {
@@ -74,12 +74,11 @@ const ViewPatientAppointments: React.FC<{ patientId: number, session: Session }>
   React.useEffect(() => {
     loadPatientAppointments(patientId, session)
       .then(appointments => {
-        console.log('Fetchted for id:', patientId, ':', appointments)
-        setAppointments(appointments) 
+        setAppointments(appointments)
       })
-      .catch((err) => { 
+      .catch((err) => {
         console.error('Error for id:', patientId, ':', err)
-        setError(true) 
+        setError(true)
       })
   }, [patientId, session])
 
@@ -91,14 +90,10 @@ const ViewPatientAppointments: React.FC<{ patientId: number, session: Session }>
     return <Text>Error loading appointments.</Text>
   }
 
-  console.log('[Render] Rendering appointments from state:', appointments);
-
   return <Box>
     <Text><strong>Appointments:</strong></Text>
     {appointments.map(appointment => {
-      // Log each appointment being mapped
-      console.log('[Render] Mapping appointment:', appointment);
-      return <ViewAppointment appointment={appointment} session={session} key={appointment.id} />;
+      return <ViewAppointment appointment={appointment} session={session} key={appointment.id} />
     })}
   </Box>
 }

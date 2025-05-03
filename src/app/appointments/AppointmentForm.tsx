@@ -13,7 +13,7 @@ import { Patient } from '@/src/api/model/patient'
 import { useQuery } from '@tanstack/react-query'
 import { DoctorIdContext } from '@/src/app/appointments/context'
 import { IconClock } from '@tabler/icons-react'
-import { format } from 'date-fns'
+import { format, isSameDay } from 'date-fns'
 
 export interface AppointmentFormData {
   start_time: Date
@@ -178,6 +178,10 @@ const AppointmentForm: React.FC<AppointmentFormProps> =
         const patientId = (values.patient_id == null) ? undefined : parseInt(values.patient_id)
         if (doctorId == null) {
           // unreachable due to validation
+          return
+        }
+        if (!isSameDay(values.start_time, values.end_time)) {
+          toast.error('Appointment cannot span across multiple days', getToastOptions(computedColorScheme))
           return
         }
         const formData = {

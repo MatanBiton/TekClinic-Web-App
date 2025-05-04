@@ -1,4 +1,6 @@
 'use client'
+import { registerLicense } from '@syncfusion/ej2-base'
+registerLicense(requireBuildEnv('NEXT_PUBLIC_SYNCFUSION_LICENSE_KEY', process.env.NEXT_PUBLIC_SYNCFUSION_LICENSE_KEY))
 import '@mantine/core/styles.layer.css'
 import '@mantine/dates/styles.layer.css'
 import 'mantine-contextmenu/styles.layer.css'
@@ -21,7 +23,7 @@ import {
 } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import Navbar from '@/src/components/Navbar'
-import { registerLicense } from '@syncfusion/ej2-base'
+
 import { requireBuildEnv } from '@/src/utils/env'
 import { SessionProvider, signIn, useSession } from 'next-auth/react'
 import { ToastContainer } from 'react-toastify'

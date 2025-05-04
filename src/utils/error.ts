@@ -63,3 +63,15 @@ export const handleUIError = (
     onClose: onRetry
   })
 }
+
+/**
+ * This function just throws an error if it's condition is false.
+ * Example usage: `assert(task != null, 'Task is null')`
+ */
+// Feel free to replace this function with a library implementation, that might
+// be useful if we ever use unit tests.
+export function assert (condition: boolean, message: string): void {
+  if (!condition) {
+    throw new Error(message)
+  }
+}

@@ -6,6 +6,8 @@ export const maxNameLength = 100
 
 export const maxSpecialNoteLength = 500
 
+type Validator = (value: string) => string | null
+
 export const israeliIDValidator = (id: string): string | null => {
   if (id.length !== 9 || isNaN(parseInt(id))) {
     return 'Israeli ID must be 9 digits long'
@@ -54,4 +56,13 @@ export const specialNoteValidator = (value: string): string | null => {
     return `Special note must be less than ${maxSpecialNoteLength} characters`
   }
   return null
+}
+
+export function notEmptyValidator(
+  errorMessage: string = 'Field is required'
+): Validator {
+  return value =>
+    validator.isEmpty(value, { ignore_whitespace: true })
+      ? errorMessage
+      : null
 }

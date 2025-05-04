@@ -15,6 +15,7 @@ import {
   type PaginationResult
 } from '@/src/api/common'
 import { type Session } from 'next-auth'
+import { assert } from '@/src/utils/error'
 
 /** Task query parameters. */
 interface TaskParams extends PaginationParams {
@@ -43,6 +44,9 @@ export class Task {
     this.expertise = scheme.expertise
     this.title = scheme.title
     this.description = scheme.description
+    assert(this.id != null, 'Task id is required');
+    assert(this.patient_id != null, 'Task patient_id is required');
+    assert(this.created_at instanceof Date, 'Task created_at is not a Date');
   }
 
   static fromScheme (scheme: TaskScheme): Task {

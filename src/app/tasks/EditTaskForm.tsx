@@ -2,99 +2,138 @@
 'use client'
 
 import React from 'react'
-import { Button, TextInput } from '@mantine/core'
+import { Button, TextInput, Textarea, NumberInput, Checkbox, Space, MantineColorScheme } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { type EditModalProps } from '@/src/components/CustomTable'
+import { Task } from '@/src/api/model/task' // Import the correct Task model
+import { type TaskUpdateScheme } from '@/src/api/scheme' // Import the update scheme
+import { notEmptyValidator } from '@/src/utils/validation'
+import { errorHandler } from '@/src/utils/error'
+import { toast } from '@/src/utils/toast'
+import { type Session } from 'next-auth'
 
-/**
- * The Task type you use in your code.
- * Adjust if you have more fields.
- */
+// Remove the outdated TaskInMemory interface
+/*
 interface TaskInMemory {
   id: number
   name: string
   doctor: string
   patient: string
 }
+*/
 
 /**
- * We'll adapt the same pattern as EditPatientForm:
- * - "item" is the existing Task we want to edit.
- * - onSuccess() is called once the update is done.
+ * Update props to use the real Task model.
  */
-type EditTaskFormProps = EditModalProps<TaskInMemory>
+interface EditTaskFormProps extends EditModalProps<Task> {
+  session: Session
+  computedColorScheme: MantineColorScheme
+  onSuccess: () => Promise<void>
+  item: Task
+}
 
 export default function EditTaskForm (
   {
     session,
     computedColorScheme,
     onSuccess,
-    item: initialTask
+    item: initialTask // Rename for clarity
   }: EditTaskFormProps
 ): JSX.Element {
   /**
    * Initialize the form with the existing task's fields.
+   * Add 'complete' to the form state.
    */
-  const form = useForm({
+  const form = useForm<TaskUpdateScheme & { complete: boolean }>({ // Add 'complete' to the form type
+    mode: 'uncontrolled',
+    validateInputOnBlur: true,
     initialValues: {
-      name: initialTask.name,
-      doctor: initialTask.doctor,
-      patient: initialTask.patient
+      title: initialTask.title,
+      description: initialTask.description ?? '', // Handle potential null description
+      expertise: initialTask.expertise ?? '', // Handle potential null expertise
+      patient_id: initialTask.patient_id,
+      complete: initialTask.complete // Add initial complete status
     },
     validate: {
-      // Optional: add your own validation rules here
-      // e.g. name: value => (value.length < 3 ? 'Name too short' : null),
+      title: notEmptyValidator('Title is required'),
+      patient_id: (value) => (value <= 0 ? 'Patient ID must be positive' : null),
     }
   })
 
-  async function handleSubmit (values: typeof form.values): Promise<void> {
-    // If you had a real microservice, you might do:
-    // initialTask.name = values.name
-    // initialTask.doctor = values.doctor
-    // initialTask.patient = values.patient
-    // await initialTask.update(session)
-    // In an in-memory approach, just mutate local state in TasksPage:
-    // but you don't have direct access to that here.
-    // Typically, you'd do something like "update the item" and let the parent re-render
-    // For a simple approach, we can do:
-    initialTask.name = values.name
-    initialTask.doctor = values.doctor
-    initialTask.patient = values.patient
+  // Use the extended form values type including 'complete'
+  async function handleSubmit (values: TaskUpdateScheme & { complete: boolean }): Promise<void> {
+    // Update the initialTask object with new values before calling update
+    initialTask.title = values.title
+    initialTask.description = values.description
+    initialTask.expertise = values.expertise
+    initialTask.patient_id = values.patient_id
+    initialTask.complete = values.complete // Update complete status
 
-    // Then call onSuccess() to tell the table we are done.
-    await onSuccess()
+    // IMPORTANT: Ensure the initialTask.update() method or the backend API
+    // actually supports updating the 'complete' field. If not, you might
+    // need a separate API call (e.g., task.markComplete(session, values.complete)).
+
+    await errorHandler(async () => {
+      await toast(
+        initialTask.update(session), // This call needs to handle 'complete'
+        'Updating task...',
+        'Task updated successfully!',
+        'Error updating task',
+        computedColorScheme
+      )
+      await onSuccess()
+    }, computedColorScheme)
   }
 
   return (
     <form
-      onSubmit={form.onSubmit((values) => {
-        // We wrap in a Promise so that if we add async logic, it's easy.
-        void handleSubmit(values)
-      })}
+      // Pass the correct values type to onSubmit
+      onSubmit={form.onSubmit(async (values) => await handleSubmit(values))}
     >
+      {/* Use fields from the Task model */}
       <TextInput
-        label="Task Name"
-        placeholder="e.g. Daily Checkup"
+        label="Task Title"
+        placeholder="e.g. Schedule follow-up"
         withAsterisk
-        {...form.getInputProps('name')}
+        key={form.key('title')}
+        {...form.getInputProps('title')}
+      />
+
+      <NumberInput
+        label="Patient ID"
+        placeholder="Enter patient ID"
+        withAsterisk
+        key={form.key('patient_id')}
+        {...form.getInputProps('patient_id')}
+        min={1} // Ensure positive ID
       />
 
       <TextInput
-        label="Doctor"
-        placeholder="e.g. Dr. Alice"
-        withAsterisk
-        {...form.getInputProps('doctor')}
+        label="Expertise"
+        placeholder="e.g. Cardiology"
+        key={form.key('expertise')}
+        {...form.getInputProps('expertise')}
       />
 
-      <TextInput
-        label="Patient"
-        placeholder="e.g. Bob the Builder"
-        withAsterisk
-        {...form.getInputProps('patient')}
+      <Textarea
+        label="Description"
+        placeholder="Details about the task"
+        key={form.key('description')}
+        {...form.getInputProps('description')}
       />
+
+      {/* Add Checkbox for the 'complete' field */}
+      <Checkbox
+        mt="md" // Add some margin top
+        label="Complete"
+        key={form.key('complete')}
+        {...form.getInputProps('complete', { type: 'checkbox' })} // Use checkbox type binding
+      />
+
+      <Space h="md" />
 
       <Button type="submit" mt="md">
-        Update
+        Update Task
       </Button>
     </form>
   )

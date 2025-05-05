@@ -244,7 +244,11 @@ export default function TasksPage (): JSX.Element {
                     columns={[
                       { title: '#', accessor: 'id', toggleable: false, draggable: false, resizable: false },
                       { accessor: 'title' },
-                      { accessor: 'complete' },
+                      // Add a render function to the 'complete' column
+                      {
+                        accessor: 'complete',
+                        render: (task) => task.complete ? 'Completed' : 'Not Completed'
+                      },
                       { accessor: 'patient_id' },
                       { accessor: 'expertise' },
                       { accessor: 'description' },

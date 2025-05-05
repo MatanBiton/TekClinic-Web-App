@@ -74,7 +74,8 @@ export class Task {
       patient_id: this.patient_id,
       expertise: this.expertise,
       title: this.title,
-      description: this.description
+      description: this.description,
+      complete: this.complete
     }
     await putAPIResource<IdHolder, TaskUpdateScheme>(Task, this.id, data, session)
   }

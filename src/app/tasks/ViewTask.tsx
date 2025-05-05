@@ -2,19 +2,15 @@
 'use client'
 
 import React from 'react'
-import { type MantineColorScheme, Text, Box, Stack } from '@mantine/core'
+import { type MantineColorScheme, Text, Box, Stack, Checkbox } from '@mantine/core'
 import { type Session } from 'next-auth'
+import { Task } from '@/src/api/model/task'
+import dayjs from 'dayjs'
 
-interface TaskInMemory {
-  id: number
-  name: string
-  doctor: string
-  patient: string
-}
 
 interface ViewTaskProps {
   computedColorScheme: MantineColorScheme
-  task: TaskInMemory
+  task: Task
   session: Session
 }
 
@@ -33,10 +29,22 @@ export default function ViewTask ({
   return (
     <Box>
       <Stack>
+        {/* Display the correct fields from the Task object */}
         <Text><strong>Task ID:</strong> {task.id}</Text>
-        <Text><strong>Name:</strong> {task.name}</Text>
-        <Text><strong>Doctor:</strong> {task.doctor}</Text>
-        <Text><strong>Patient:</strong> {task.patient}</Text>
+        <Text><strong>Title:</strong> {task.title}</Text>
+        <Text><strong>Description:</strong> {task.description || 'N/A'}</Text>
+        <Text><strong>Expertise:</strong> {task.expertise || 'N/A'}</Text>
+        <Text><strong>Patient ID:</strong> {task.patient_id}</Text>
+        <Text><strong>Created At:</strong> {dayjs(task.created_at).format('YYYY-MM-DD HH:mm')}</Text>
+        <Checkbox
+          readOnly
+          label="Complete"
+          checked={task.complete}
+        />
+        {/* Remove fields that are not part of the Task model */}
+        {/* <Text><strong>Name:</strong> {task.name}</Text> */}
+        {/* <Text><strong>Doctor:</strong> {task.doctor}</Text> */}
+        {/* <Text><strong>Patient:</strong> {task.patient}</Text> */}
       </Stack>
     </Box>
   )

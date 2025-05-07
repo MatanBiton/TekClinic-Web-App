@@ -105,25 +105,34 @@ const handleShowDeleteModal = buildDeleteModal<Task>(
 )
 
 function showDeleteModal ({
-                              item,
-                              session,
-                              computedColorScheme,
-                              onSuccess
-                            }: {
-  item: Task
-  session: any
-  computedColorScheme: any
-  onSuccess: () => Promise<void>
+  item,
+  session,
+  computedColorScheme,
+  onSuccess // This is the original onSuccess (e.g., from CustomTable for refetching)
+}: {
+item: Task
+session: Session
+computedColorScheme: any
+onSuccess: () => Promise<void> | void // Adjust type as per actual usage of original onSuccess
 }): void {
-  handleShowDeleteModal({
-    item,
-    session,
-    computedColorScheme,
-    onSuccess: async () => {
-      await item.delete(session)
-      await onSuccess()
-    }
-  })
+handleShowDeleteModal({
+item,
+session,
+computedColorScheme,
+// Pass the original onSuccess directly.
+// handleShowDeleteModal (buildDeleteModal) will call item.delete()
+// and then call this onSuccess function.
+onSuccess: async () => {
+try {
+// The original onSuccess (for UI refresh, etc.) is called here
+await onSuccess();
+} catch (error) {
+// Handle any errors from the original onSuccess if necessary,
+// though primary error handling for delete is in buildDeleteModal.
+console.error('Error in onSuccess after task deletion:', error);
+}
+}
+});
 }
 
 // -------------------------------------------------------------

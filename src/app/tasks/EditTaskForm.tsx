@@ -2,7 +2,7 @@
 'use client'
 
 import React from 'react'
-import { Button, TextInput, Textarea, NumberInput, Checkbox, Space, MantineColorScheme } from '@mantine/core'
+import { Button, TextInput, Textarea, NumberInput, Checkbox, Space, MantineColorScheme, Select } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { type EditModalProps } from '@/src/components/CustomTable'
 import { Task } from '@/src/api/model/task' // Import the correct Task model
@@ -50,7 +50,7 @@ export default function EditTaskForm (
     initialValues: {
       title: initialTask.title,
       description: initialTask.description ?? '', // Handle potential null description
-      expertise: initialTask.expertise ?? '', // Handle potential null expertise
+      expertise: initialTask.expertise ?? null, // Handle potential null expertise, ensure it's null for Select if empty
       patient_id: initialTask.patient_id,
       complete: initialTask.complete // Add initial complete status
     },
@@ -85,6 +85,17 @@ export default function EditTaskForm (
     }, computedColorScheme)
   }
 
+  // TODO: Replace this with your actual list of doctor expertises
+  // This could be fetched from an API or defined as a constant
+  const expertiseOptions = [
+    { value: 'Cardiology', label: 'Cardiology' },
+    { value: 'Dermatology', label: 'Dermatology' },
+    { value: 'Neurology', label: 'Neurology' },
+    { value: 'Pediatrics', label: 'Pediatrics' },
+    { value: 'Ophthalmology', label: 'Ophthalmology' },
+    // Add other expertises here
+  ];
+
   return (
     <form
       // Pass the correct values type to onSubmit
@@ -108,11 +119,16 @@ export default function EditTaskForm (
         min={1} // Ensure positive ID
       />
 
-      <TextInput
+      <Select
         label="Expertise"
-        placeholder="e.g. Cardiology"
+        placeholder="Select expertise"
+        data={expertiseOptions}
         key={form.key('expertise')}
         {...form.getInputProps('expertise')}
+        // Add 'searchable' if you want the dropdown to be searchable
+        // searchable
+        // Add 'required' if expertise is a mandatory field
+        // required
       />
 
       <Textarea

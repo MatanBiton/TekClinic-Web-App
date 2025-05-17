@@ -36,7 +36,11 @@ function showCreateModal (props: CreateModalProps): void {
   modals.open({
     modalId,
     title: 'Add Task',
-    children: <CreateTaskForm {...props} />
+    children: <CreateTaskForm {...props} onSuccess={
+      async () => {
+        modals.close(modalId)
+        await props.onSuccess()
+      }} />
     // TODO: Rename this to be onSuccess to be more consistent with other
     // CreatePatientForm.tsx and friends, and make this async!
     // Look at CreatePatientForm.tsx for an example, with the use of a

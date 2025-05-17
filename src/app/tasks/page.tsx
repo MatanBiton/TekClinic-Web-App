@@ -8,6 +8,9 @@ import EditTaskForm from './EditTaskForm'
 import ViewTask from './ViewTask'
 import { buildDeleteModal } from '@/src/utils/modals'
 import { Task } from '@/src/api/model/task'
+import { Patient }  from '@/src/api/model/patient'
+import { useQuery } from '@tanstack/react-query'
+import { Session }  from 'next-auth'
 
 // 1) Kanban imports, using BOOTSTRAP5 theme instead of "material"
 import '@syncfusion/ej2-base/styles/bootstrap5.css'
@@ -24,7 +27,6 @@ import {
 } from '@syncfusion/ej2-react-kanban'
 
 import { Button, Radio, Group } from '@mantine/core'
-import {Session} from "next-auth";
 import {useGuaranteeSession} from '@/src/utils/auth'
 import dayjs from 'dayjs';
 
@@ -178,30 +180,57 @@ const cardSettings: CardSettingsModel = {
   contentField: 'doctor'
 }
 
+// Define an interface for tasks that includes the patient's name
+interface TaskWithPatientName extends Task {
+  patientName?: string;
+}
+
 export default function TasksPage (): JSX.Element {
-  const session = useGuaranteeSession()
+  const guaranteedSession = useGuaranteeSession(); // Renaming for clarity, or you can keep it as 'session'
+                                                 // if you rename the parameter in queryOptions
 
   // `viewMode` toggles between "table" and "kanban"
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table')
 
   // `sortBy` chooses whether Kanban columns are by "doctor" or "expertise"
   const [sortBy, setSortBy] = useState<SortBy>('patient_id')
-
-  // TODO: Replace console.error calls with a toasttttt
   
-  const [tasks, setTasks] = useState<Task[]>()
+  const [tasks, setTasks] = useState<TaskWithPatientName[]>() // Use TaskWithPatientName here
   useEffect(() => {
-    Task.get({}, session)
-      .then(({ items }) => { setTasks(items) })
+    Task.get({}, guaranteedSession)
+      .then(async ({ items }) => { 
+        const tasksWithNames = await Promise.all(
+          items.map(async (task) => {
+            let patientName = 'N/A';
+            if (task.patient_id) {
+              try {
+                // Use Patient.getById to fetch the patient directly
+                const patient = await Patient.getById(task.patient_id, guaranteedSession);
+                if (patient) {
+                  patientName = patient.name;
+                } else {
+                  // This case should ideally not happen if patient_id is valid and refers to an existing patient
+                  patientName = `ID: ${task.patient_id} (Not found)`;
+                }
+              } catch (e) { 
+                console.error(`Failed to fetch patient name for ID ${task.patient_id} in useEffect:`, e);
+                patientName = `ID: ${task.patient_id} (Error)`; 
+              }
+            }
+            return { ...task, patientName };
+          })
+        );
+        setTasks(tasksWithNames); 
+      })
       .catch(console.error)
-  }, [session])
+  }, [guaranteedSession])
 
   const [columns, setColumns] = useState<{headerText: string | number, keyField: string | number }[]>()
   useEffect(() => {
-    kanbanColumns(session, sortBy)
+    kanbanColumns(guaranteedSession, sortBy)
       .then((columnsData) => {setColumns(columnsData)})
       .catch(console.error)
-  }, [session, sortBy]);
+  }, [guaranteedSession, sortBy]);
 
   // -------------------------------------------------------------
   // RENDER
@@ -241,13 +270,28 @@ export default function TasksPage (): JSX.Element {
                 <CustomTable<Task>
                     dataName="Task"
                     storeColumnKey="task-columns"
-                    queryOptions={(session, page, pageSize) => ({
-                      queryKey: ['tasks', page, pageSize],
+                    queryOptions={(_, page, pageSize) => ({
+                      queryKey: ['tasksWithPatientNames', page, pageSize],
                       queryFn: async () => {
-                        return await Task.get({
-                          skip: pageSize * (page - 1),
-                          limit: pageSize
-                        }, session)
+                        const taskResponse = await Task.get(
+                          { skip: pageSize * (page - 1), limit: pageSize },
+                          guaranteedSession
+                        );
+                        const itemsWithNames = await Promise.all(
+                          taskResponse.items.map(async (t) => {
+                            let patientName = 'N/A';
+                            if (t.patient_id) {
+                              try {
+                                const patient = await Patient.getById(t.patient_id, guaranteedSession);
+                                patientName = patient?.name ?? `ID: ${t.patient_id} (Not found)`;
+                              } catch {
+                                patientName = `ID: ${t.patient_id} (Error)`;
+                              }
+                            }
+                            return { ...t, patientName };
+                          })
+                        );
+                        return { ...taskResponse, items: itemsWithNames };
                       }
                     })}
                     showCreateModal={showCreateModal}
@@ -257,15 +301,18 @@ export default function TasksPage (): JSX.Element {
                     columns={[
                       { title: '#', accessor: 'id', toggleable: false, draggable: false, resizable: false },
                       { accessor: 'title' },
-                      // Add a render function to the 'complete' column
                       {
                         accessor: 'complete',
                         render: (task) => task.complete ? 'Completed' : 'Not Completed'
                       },
-                      { accessor: 'patient_id' },
+                      {
+                        title: 'Patient',
+                        accessor: 'patient_id',
+                        render: t => <PatientNameCell id={t.patient_id} session={guaranteedSession} />
+                      },
                       { accessor: 'expertise' },
                       { accessor: 'description' },
-                      { accessor: 'created_at', render: task => dayjs(task.created_at).format('YYYY-MM-DD') },
+                      { accessor: 'created_at', render: t => dayjs(t.created_at).format('YYYY-MM-DD') },
                     ]}
                 />
             )
@@ -293,4 +340,23 @@ export default function TasksPage (): JSX.Element {
             )}
       </div>
   )
+}
+
+// a tiny component that fetches & displays a patient’s name by ID
+function PatientNameCell({
+  id,
+  session
+}: {
+  id: number
+  session: Session
+}) {
+  const { data: patient, isLoading } = useQuery<Patient, Error>({
+    queryKey: ['patient', id],
+    queryFn: () => Patient.getById(id, session),
+    staleTime: 5 * 60_000
+  })
+
+  if (isLoading) return 'Loading…'
+  if (!patient)  return 'Unknown'
+  return patient.name
 }

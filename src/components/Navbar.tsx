@@ -3,7 +3,8 @@ import React from 'react'
 import { CalendarEvent, Home2 } from 'tabler-icons-react'
 import Link from 'next/link'
 import './NavBar.css'
-import { FaUserDoctor, FaUserGroup } from 'react-icons/fa6'
+import { FaStethoscope, FaRegUser, FaListCheck } from 'react-icons/fa6'
+import { LuAlignEndHorizontal } from 'react-icons/lu'
 import { usePathname } from 'next/navigation'
 
 const Navbar: React.FC<{ opened: boolean, toggle: () => void }> = ({
@@ -19,14 +20,19 @@ const Navbar: React.FC<{ opened: boolean, toggle: () => void }> = ({
       icon: <Home2 size="20px"/>
     },
     {
+      href: '/dashboard',
+      label: 'Dashboard',
+      icon: <LuAlignEndHorizontal size="20px"/>
+    },
+    {
       href: '/patients',
       label: 'Patients',
-      icon: <FaUserGroup size="20px"/>
+      icon: <FaRegUser size="20px"/>
     },
     {
       href: '/doctors',
       label: 'Doctors',
-      icon: <FaUserDoctor size="20px"/>
+      icon: <FaStethoscope size="20px"/>
     },
     {
       href: '/appointments',
@@ -36,8 +42,9 @@ const Navbar: React.FC<{ opened: boolean, toggle: () => void }> = ({
     {
       href: '/tasks',
       label: 'Tasks',
-      // TODO: Change this icon!
-      icon: <CalendarEvent size="20px"/>
+      icon: <FaListCheck size="20px" style={{
+        transform: "scale(0.8)" // This icon is slightly larger than the rest
+      }}/>
     }
   ]
 

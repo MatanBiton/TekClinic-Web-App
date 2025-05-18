@@ -12,6 +12,8 @@ import EditDoctorForm from './EditDoctorForm'
 import male_avatar from '@/public/male-patient.webp'
 import female_avatar from '@/public/female-patient.webp'
 import unknown_avatar from '@/public/unknown-patient.webp'
+import AppointmentSchedule from '@/src/components/AppointmentSchedule'
+
 
 function DoctorPage (): React.JSX.Element {
   const computedColorScheme = useComputedColorScheme()
@@ -109,6 +111,10 @@ function DoctorPage (): React.JSX.Element {
 
                     {doctor.special_note !== null && <Text><strong>Special Note:</strong> {doctor.special_note}</Text>}
                   </Box>
+                  <AppointmentSchedule
+                    doctor_id={doctor.id}
+                    hideDoctor
+                  />
                 </Stack>
               </Group>
             )

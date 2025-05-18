@@ -8,6 +8,8 @@ import unknown_avatar from '@/public/unknown-patient.webp'
 import { Appointment } from '@/src/api/model/appointment'
 import PhoneNumber from '@/src/components/PhoneNumber'
 import Languages from '@/src/components/Languages'
+import AppointmentSchedule from '@/src/components/AppointmentSchedule'
+
 
 async function loadPatientAppointments (patientId: number, session: Session): Promise<Appointment[]> {
   const { items: appointments } = await Appointment.get({
@@ -60,42 +62,6 @@ const ViewAppointment: React.FC<{ appointment: Appointment, session: Session }> 
       </Text>
     </Group>
   </Paper>
-}
-
-/**
- * This renders a list of appointments for a given patient, to be shown in the
- * patient view below the patient's information.
- */
-const ViewPatientAppointments: React.FC<{ patientId: number, session: Session }> = ({ patientId, session }) => {
-  const [appointments, setAppointments] = React.useState<Appointment[] | null>(null)
-  const [error, setError] = React.useState(false)
-
-  // Load appointments then update the state.
-  React.useEffect(() => {
-    loadPatientAppointments(patientId, session)
-      .then(appointments => {
-        setAppointments(appointments)
-      })
-      .catch((err) => {
-        console.error('Error for id:', patientId, ':', err)
-        setError(true)
-      })
-  }, [patientId, session])
-
-  if (appointments === null) {
-    return <Text>Loading appointments...</Text>
-  }
-
-  if (error) {
-    return <Text>Error loading appointments.</Text>
-  }
-
-  return <Box>
-    <Text><strong>Appointments:</strong></Text>
-    {appointments.map(appointment => {
-      return <ViewAppointment appointment={appointment} session={session} key={appointment.id} />
-    })}
-  </Box>
 }
 
 interface ViewPatientProps {
@@ -152,7 +118,10 @@ const ViewPatient: React.FC<ViewPatientProps> =
 
     <Divider my="sm"/>
 
-    <ViewPatientAppointments patientId={patient.id} session={session} />
+    <AppointmentSchedule
+        patient_id={patient.id}
+        hidePatient
+    />
   </Box>
 
 export default ViewPatient

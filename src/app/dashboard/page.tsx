@@ -1,10 +1,18 @@
 'use client'
 
 import React from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
+    Button,
+    Group,
+    Paper,
+    Stack,
     Title,
-    Group, Stack, Button } from '@mantine/core'
+    useComputedColorScheme,
+} from '@mantine/core'
+import AppointmentSchedule from '@/src/components/AppointmentSchedule'
+import { useGuaranteeSession } from '@/src/utils/auth'
 
 
 function Column(props: { name: string, children: React.ReactNode }) {
@@ -18,21 +26,48 @@ function Column(props: { name: string, children: React.ReactNode }) {
 }
 
 
+function dateAddHour(date: Date, hours: number): Date {
+    const newDate = new Date(date)
+    newDate.setHours(newDate.getHours() + hours)
+    return newDate
+}
+
+
 function SelectPatient () {
+    const session = useGuaranteeSession()
+    const ccs = useComputedColorScheme()
+    const router = useRouter()
     return <Stack>
         <Title ta="center">Select a Patient</Title>
         <Group grow align="stretch" justify="flex-start">
             <Column name="With Existing Appointment">
-                <Link prefetch={true} href={{
+                <Paper
+                    shadow="xs"
+                    bg="blue"
+                    w="100%"
+                    pl="xs"
+                    pr="xs"
+                >
+                    <Title order={4} ta="center">Today's Appointments</Title>
+                    <AppointmentSchedule
+                        date='today'
+                        hideDate={true}
+                        onClick={async a => router.push(
+                            `/dashboard/view-patient?appointment=${a.id}`
+                        )}
+                    />
+                </Paper>
+                {/*
+                <Link href={{
                     pathname: "/dashboard/view-patient",
                     query: {
                         patient: 'test-patient',
                         appointment: 'test-appointment',
                     }
                 }}>
-                    {/* Just for testing */}
                     <Button fullWidth>Choose test appointment</Button>
                 </Link>
+                */}
             </Column>
             <Column name="Without an Appointment">
                 <Link prefetch={true} href="/dashboard/create-patient">

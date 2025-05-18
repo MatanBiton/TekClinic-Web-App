@@ -7,13 +7,14 @@ import { useForm } from '@mantine/form'
 import { type EditModalProps } from '@/src/components/CustomTable'
 import { Task } from '@/src/api/model/task'
 import { Patient } from '@/src/api/model/patient'; // Added Patient model
-import { type TaskUpdateScheme } from '@/src/api/scheme'
+import { type TaskUpdateScheme, type IdHolder } from '@/src/api/scheme' // Add IdHolder to the import from scheme.ts
 import { notEmptyValidator } from '@/src/utils/validation'
 import { errorHandler } from '@/src/utils/error'
 import { toast } from 'react-toastify'; // Import toast from react-toastify
 import { getToastOptions } from '@/src/utils/toast'; // Keep this for getToastOptions
 import { type Session } from 'next-auth'
 import { useQuery } from '@tanstack/react-query'; // Added useQuery
+import { putAPIResource } from '@/src/api/common'; // Import from the correct module
 
 interface EditTaskFormProps extends EditModalProps<Task> {
   session: Session
@@ -71,30 +72,38 @@ export default function EditTaskForm (
   });
 
   async function handleSubmit (values: EditTaskFormValues): Promise<void> {
-    initialTask.title = values.title
-    initialTask.description = values.description
-    initialTask.expertise = values.expertise
-    // Ensure patient_id is parsed back to a number before updating
-    if (values.patient_id) {
-      const parsedPatientId = parseInt(values.patient_id, 10);
-      if (!isNaN(parsedPatientId)) {
-        initialTask.patient_id = parsedPatientId;
-      } else {
+    // parse and validate patient_id
+    let parsedPatientIdAsNumber: number | undefined;
+    if (values.patient_id !== null) { 
+      parsedPatientIdAsNumber = parseInt(values.patient_id, 10);
+      if (isNaN(parsedPatientIdAsNumber)) {
         toast.error('Invalid patient selection.', getToastOptions(computedColorScheme));
         return;
       }
     } else {
-      // This should not happen if validation is correct and patient_id is required
       toast.error('Patient is required.', getToastOptions(computedColorScheme));
       return;
     }
-    initialTask.complete = values.complete
+
+    // Instead of updating initialTask properties and calling its update method,
+    // construct a complete payload and send it directly
+    const updateData: TaskUpdateScheme = {
+      title: values.title,
+      description: values.description || '',
+      expertise: values.expertise || '',
+      patient_id: parsedPatientIdAsNumber,
+      complete: values.complete
+    };
+    
+    // For debugging - log the payload to ensure it contains all values
+    console.log('Task update payload:', updateData);
 
     await errorHandler(async () => {
-      await toast.promise( // Using toast.promise for better feedback
-        initialTask.update(session),
+      await toast.promise(
+        // Fixed: Use the Task class instead of the string 'tasks'
+        putAPIResource<IdHolder, TaskUpdateScheme>(Task, initialTask.id, updateData, session),
         {
-          pending: 'Updating task...',
+          pending: 'Updating task…',
           success: 'Task updated successfully!',
           error: 'Error updating task.',
         },

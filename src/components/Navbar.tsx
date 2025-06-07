@@ -18,6 +18,12 @@ const Navbar: React.FC<{ opened: boolean, toggle: () => void }> = ({
       href: '/',
       label: 'Home',
       icon: <Home2 size="20px"/>
+    
+    },
+    {
+      href: '/summary',
+      label: 'Summary',
+      icon: <LuAlignEndHorizontal size="20px"/>
     },
     {
       href: '/dashboard',

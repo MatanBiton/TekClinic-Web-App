@@ -41,6 +41,14 @@ export default function AppointmentSchedule(
 
     return (
         <Stack gap="xs">
+            <Title
+            order={5}
+            mb="md"
+            style={{
+                borderBottom: '2px solid rgba(0, 0, 0, 0.1)',
+                paddingBottom: '0.25rem',}}> Appointments
+            </Title>
+
             { appointments === 'loading'
                 ? <Text>Loading...</Text>
                 : <>{...appointments.map(appointment => {

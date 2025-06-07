@@ -343,7 +343,7 @@ const CustomTable = <DataType, TData extends PaginationResult<DataType> = Pagina
             ])(event)
           }}
           defaultColumnProps={{
-            toggleable: true,
+            toggleable: false,
             draggable: true,
             resizable: true
           }}

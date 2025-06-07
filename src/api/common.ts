@@ -5,6 +5,9 @@ import { type IdHolder, type NamedAPIResource, type NamedAPIResourceList, type P
 import { wrapError } from '@/src/api/error'
 import { phone } from 'phone'
 import { QueryClient } from '@tanstack/react-query'
+import React from 'react'
+import { type Task } from '@/src/api/model/task'
+import { type Appointment } from '@/src/api/model/appointment'
 
 // url of the API
 const API_URL = requireBuildEnv('NEXT_PUBLIC_API_URL', process.env.NEXT_PUBLIC_API_URL)

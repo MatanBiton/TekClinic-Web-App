@@ -19,7 +19,9 @@ import { assert } from '@/src/utils/error'
 
 /** Task query parameters. */
 interface TaskParams extends PaginationParams {
-  search?: string
+  patient_id?: number;
+  search?: string;
+  complete?: boolean;
 }
 
 export class Task {
@@ -62,12 +64,21 @@ export class Task {
     if (params.search != null && params.search !== '') {
       formattedParams.search = params.search
     }
-    return await getAPIResourceList(Task, formattedParams, session)
+ 
+    return await getAPIResourceList(Task, formattedParams, session);
+
   }
 
   static create = async (props: TaskBaseScheme, session: Session): Promise<number> => {
     return await createAPIResource<TaskBaseScheme>(Task, props, session)
   }
+
+  static getByPatientId = async (patientId: number, session: Session): Promise<Task[]> => {
+    const formattedParams = formatPaginationParams({ patient_id: patientId } as TaskParams);
+    console.log('Fetching tasks for patient ID:', patientId); // Debugging
+    const { items: tasks } = await getAPIResourceList(Task, formattedParams, session);
+    return tasks;
+  };
 
   update = async (session: Session): Promise<void> => {
     const data: TaskUpdateScheme = {

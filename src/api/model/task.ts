@@ -11,11 +11,14 @@ import {
   getAPIResource,
   getAPIResourceList,
   putAPIResource,
+  apiGET,                 // add this
   type PaginationParams,
   type PaginationResult
 } from '@/src/api/common'
 import { type Session } from 'next-auth'
 import { assert } from '@/src/utils/error'
+import { requireBuildEnv } from '@/src/utils/env'
+import { wrapError } from '@/src/api/error'
 
 /** Task query parameters. */
 interface TaskParams extends PaginationParams {
@@ -73,31 +76,21 @@ export class Task {
     return await createAPIResource<TaskBaseScheme>(Task, props, session)
   }
 
-  static getByPatientId = async (
-    params: TaskParams,
-    session: Session
-  ): Promise<PaginationResult<Task>> => {
-    // 1. format skip & limit
-    const formattedParams = formatPaginationParams(params)
-
-    // 2. apply patient_id filter
-    if (params.patient_id != null) {
-      formattedParams.patient_id = params.patient_id.toString()
+  /**
+   * Fetch all tasks for a given patient in one call.
+   * This hits GET /tasks/by-patient?patient_id=… and returns TaskScheme[]
+   * mapping it to Task instances.
+   */
+  static getByPatientId = async (patientId: number, session: Session): Promise<Task[]> => {
+    const API_URL = requireBuildEnv('NEXT_PUBLIC_API_URL', process.env.NEXT_PUBLIC_API_URL)
+    const url = `${API_URL}/tasks/by-patient?patient_id=${patientId}`
+    try {
+      const schemes = await apiGET<TaskScheme[]>(url, session)
+      return schemes.map(Task.fromScheme)
+    } catch (err) {
+      throw wrapError(err)
     }
-
-    // 3. honor any search text
-    if (params.search != null && params.search !== '') {
-      formattedParams.search = params.search
-    }
-
-    // 4. and/or filter by completion status
-    if (params.complete != null) {
-      formattedParams.complete = params.complete.toString()
-    }
-
-    // 5. finally hit the list endpoint
-    return await getAPIResourceList(Task, formattedParams, session)
-  };
+  }
 
   update = async (session: Session): Promise<void> => {
     const data: TaskUpdateScheme = {

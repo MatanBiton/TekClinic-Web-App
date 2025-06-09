@@ -24,14 +24,16 @@ export default function TaskSchedule({ patient_id }: TaskScheduleProps) {
 
   useEffect(() => {
     errorHandler(async () => {
-    // now returns { items: Task[], count: number }
-    const { items } = await Task.getByPatientId(
-      { patient_id, skip: 0, limit: 50 },
-      session
-    )
-    setTasks(items)
-  }, ccs)
-}, [patient_id, session])
+      try {
+        // now returns Task[]
+        const tasks = await Task.getByPatientId(patient_id, session)
+        setTasks(tasks)
+      } catch {
+        // if the call errors (e.g. no tasks) → show "No tasks found"
+        setTasks([])
+      }
+    }, ccs)
+  }, [patient_id, session])
 
   return (
     <Stack gap="xs">

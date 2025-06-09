@@ -24,10 +24,14 @@ export default function TaskSchedule({ patient_id }: TaskScheduleProps) {
 
   useEffect(() => {
     errorHandler(async () => {
-      const response = await Task.getByPatientId(patient_id, session)
-      setTasks(response)
-    }, ccs)
-  }, [patient_id, session])
+    // now returns { items: Task[], count: number }
+    const { items } = await Task.getByPatientId(
+      { patient_id, skip: 0, limit: 50 },
+      session
+    )
+    setTasks(items)
+  }, ccs)
+}, [patient_id, session])
 
   return (
     <Stack gap="xs">

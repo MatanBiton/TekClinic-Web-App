@@ -73,11 +73,30 @@ export class Task {
     return await createAPIResource<TaskBaseScheme>(Task, props, session)
   }
 
-  static getByPatientId = async (patientId: number, session: Session): Promise<Task[]> => {
-    const formattedParams = formatPaginationParams({ patient_id: patientId } as TaskParams);
-    console.log('Fetching tasks for patient ID:', patientId); // Debugging
-    const { items: tasks } = await getAPIResourceList(Task, formattedParams, session);
-    return tasks;
+  static getByPatientId = async (
+    params: TaskParams,
+    session: Session
+  ): Promise<PaginationResult<Task>> => {
+    // 1. format skip & limit
+    const formattedParams = formatPaginationParams(params)
+
+    // 2. apply patient_id filter
+    if (params.patient_id != null) {
+      formattedParams.patient_id = params.patient_id.toString()
+    }
+
+    // 3. honor any search text
+    if (params.search != null && params.search !== '') {
+      formattedParams.search = params.search
+    }
+
+    // 4. and/or filter by completion status
+    if (params.complete != null) {
+      formattedParams.complete = params.complete.toString()
+    }
+
+    // 5. finally hit the list endpoint
+    return await getAPIResourceList(Task, formattedParams, session)
   };
 
   update = async (session: Session): Promise<void> => {

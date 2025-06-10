@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button, Checkbox, MantineColorScheme, NumberInput, Space, Textarea, TextInput, Select } from '@mantine/core'
+import { Button, Checkbox, MantineColorScheme, NumberInput, Space, Textarea, TextInput, Select, Loader } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { CreateModalProps } from '@/src/components/CustomTable'
 import { notEmptyValidator } from '@/src/utils/validation';
@@ -48,7 +48,13 @@ const onSubmit =
   };
 
 export default function CreateTaskForm ({ session, computedColorScheme, onSuccess }: CreateModalProps): JSX.Element {
-  const form = useForm({
+  const form = useForm<{
+    title: string
+    description: string
+    complete: boolean
+    patient_id: string | null
+    expertise: string | null
+  }>({
     mode: 'uncontrolled',
     validateInputOnBlur: true,
     initialValues: {
@@ -60,9 +66,7 @@ export default function CreateTaskForm ({ session, computedColorScheme, onSucces
     },
     validate: {
       title: notEmptyValidator('Title is required'),
-      patient_id: (value) => (value == null ? 'Patient is required' : null), // Validation for Select
-      // Optional: Add validation for expertise if it becomes required
-      // expertise: (value) => (value == null ? 'Expertise is required' : null),
+      patient_id: (value) => (value == null ? 'Patient is required' : null),
     },
   });
 
@@ -71,10 +75,29 @@ export default function CreateTaskForm ({ session, computedColorScheme, onSucces
   const { data: patientOptions, isLoading: patientLoading } = useQuery({
     queryKey: ['patients', 'search', patientSearchValue],
     queryFn: async () => {
-      const { items: patients } = await Patient.get({ search: patientSearchValue }, session);
-      return patients.map((patient) => ({
+      // if the user typed only digits, try loading by ID
+      if (patientSearchValue && /^\d+$/.test(patientSearchValue)) {
+        try {
+          const patient = await Patient.getById(
+            parseInt(patientSearchValue, 10),
+            session
+          );
+          return [{
+            value: patient.id.toString(),
+            label: `${patient.name} (ID: ${patient.id})`
+          }];
+        } catch {
+          // not found by ID → fall back to text search
+        }
+      }
+      // normal search by name
+      const { items: patients } = await Patient.get(
+        { search: patientSearchValue },
+        session
+      );
+      return patients.map(patient => ({
         value: patient.id.toString(),
-        label: patient.name,
+        label: `${patient.name} (ID: ${patient.id})`
       }));
     },
   });
@@ -106,13 +129,21 @@ export default function CreateTaskForm ({ session, computedColorScheme, onSucces
         placeholder="Select a patient"
         required
         searchable
-        onSearchChange={setPatientSearchValue}
+
+        // control only the search input
         searchValue={patientSearchValue}
+        onSearchChange={setPatientSearchValue}
+
         data={patientOptions || []}
-        disabled={patientLoading}
-        nothingFoundMessage={patientLoading ? "Loading..." : "No patients found"}
-        key={form.key('patient_id')}
-        {...form.getInputProps('patient_id')}
+        nothingFoundMessage={patientLoading ? 'Loading...' : 'No patients found'}
+
+        // drive only the selected value & error
+        value={form.values.patient_id ?? undefined}
+        onChange={(val) => form.setFieldValue('patient_id', val)}
+        error={form.errors.patient_id}
+
+        // show loader but keep it enabled
+        rightSection={patientLoading ? <Loader size="xs" /> : null}
       />
 
       <Select
